@@ -1,0 +1,10 @@
+go to 'http://mybinder.org/'
+
+point it to the GitHub repository
+
+it will make binder, then give you a link
+
+copy and paste the link into the GitHub repository readme.md 
+(shows up on the first page of the GitHub repo as a button> "launch binder")
+
+click the button and it will run the Jupyter notebook live
