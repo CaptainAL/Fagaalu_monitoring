@@ -4,6 +4,9 @@ Created on Wed Jul 15 14:17:48 2015
 
 @author: Alex
 """
+
+## CTRL-SPACE for code completion options
+
 #### Import modules
 ## Data Processing
 import os
@@ -17,7 +20,7 @@ pd.set_option('display.large_repr', 'truncate')
 pd.set_option('display.width', 180)
 pd.set_option('display.max_rows', 20)
 pd.set_option('display.max_columns', 10)
-pd.set_option('display.precision', 3)
+#pd.set_option('display.precision', 3)
 
 
 plt.close('all')
@@ -32,15 +35,20 @@ now_date = now.strftime('%d_%m_%Y')
 #### DIRECTORIES
 Laptop = 'Field'
 Laptop = 'Alex'
+#Laptop = 'Trent'
 
 if Laptop == 'Field': 
     maindir = "C:/Users/geoguser/Desktop/FieldLaptop/AmSamFieldLaptop/Siumu's Folder/"
     dirs={'main':maindir}
     
 if Laptop == 'Alex': 
-    maindir = "C:/Users/atm19/Google Drive/AmSamFieldLaptop/Siumu's Folder/"
+    maindir = "C:/Users/atm19/Documents/Github/Fagaalu_monitoring/Fagaalu_Monitoring_2016/"
     dirs={'main':maindir}
     
+if Laptop == 'Trent': 
+    maindir = "C:/Users/atm19/Google Drive/AmSamFieldLaptop/Siumu's Folder/" # <<<< TRENT ADD YOUR PATH HERE
+    dirs={'main':maindir}
+
 
 ## Year Interval Times
 #start2012, stop2012 = dt.datetime(2012,1,1,0,0), dt.datetime(2012,12,31,11,59)    
@@ -48,6 +56,33 @@ if Laptop == 'Alex':
 #start2014, stop2014 = dt.datetime(2014,1,1,0,0), dt.datetime(2014,12,31,11,59)   
 #start2015, stop2015 = dt.datetime(2015,1,1,0,0), dt.datetime(2015,12,31,11,59)   
 start2016, stop2016 = dt.datetime(2016,1,1,0,0), dt.datetime(2016,6,1,11,59)   
+
+
+def Solinst_data_parser(filename):
+    df = pd.read_csv(filename,names=range(0,5)) ## Read csv
+    hdr_row = np.where(df[0]=='Date')[0][0]
+    df.columns = df.iloc[hdr_row].values ## find header row and make column names from row values
+    df = df[hdr_row+1:]
+    df.index = pd.to_datetime(df['Date']+' '+df['Time'])
+    ## Make sure data are correct type
+    for col in df.columns:
+        #print col
+        if type(pd.to_datetime(df[col].iloc[0])) == str:
+            try:
+                #print 'to float'
+                df[col] = df[col].astype(np.float)
+            except:
+                #print 'cant float'
+                pass
+        elif type(pd.to_datetime(df[col].iloc[0])) == pd.tslib.Timestamp:
+            try:
+                #print 'to timestamp'
+                df[col] = pd.to_datetime(df[col])
+            except:
+                #print 'cant time'
+                pass
+    return df
+
 
 ### Barologgers
 #my_parser = lambda x: datetime.strptime(x, '%Y%m%d %H%M%s')
@@ -58,8 +93,8 @@ Barologger_raw_data  = pd.DataFrame()
 for f in os.listdir(Barologger_path):
     if f.endswith('.csv') == True:
         print f
-        raw = pd.DataFrame.from_csv(Barologger_path+f,header=10,parse_dates=[[0,1]])
-        raw = raw.ix[:,1:3]
+        raw = Solinst_data_parser(Barologger_path+f)
+        raw = raw[['LEVEL','TEMPERATURE']]
         raw.columns  = ['Abs Pres, kPa','Temp, C']
         Barologger_raw_data = Barologger_raw_data.append(raw)
 LBJ_Barologger_raw_data= Barologger_raw_data
@@ -73,30 +108,33 @@ Barologger_raw_data  = pd.DataFrame()
 for f in os.listdir(Barologger_path):
     if f.endswith('.csv') == True:
         print f
-        raw = pd.DataFrame.from_csv(Barologger_path+f,header=11,parse_dates=[[0,1]])
-        raw = raw.ix[:,1:3]
+        raw = Solinst_data_parser(Barologger_path+f)
+        raw = raw[['LEVEL','TEMPERATURE']]
         raw.columns  = ['Abs Pres, kPa','Temp, C']
         Barologger_raw_data = Barologger_raw_data.append(raw)
-FOREST_Barologger_raw_data = Barologger_raw_data.drop_duplicates()
+FOREST_Barologger_raw_data = Barologger_raw_data
 FOREST_Barologger_raw_data['index']  = FOREST_Barologger_raw_data.index
 FOREST_Barologger_raw_data = FOREST_Barologger_raw_data.drop_duplicates(cols='index')
 FOREST_Barologger_raw_data = FOREST_Barologger_raw_data.reindex(pd.date_range(start2016,stop2016,freq='5Min'))
 
 
+        
+
 ### LBJ-PT
-LBJ_PT_path = maindir+'3-LBJ/LBJ-PT/'
+PT_path = maindir+'3-LBJ/LBJ-PT/'
 LBJ_PT_raw_data = pd.DataFrame()
-for f in os.listdir(LBJ_PT_path):
-    if f.endswith('.csv') == True:
+for f in os.listdir(PT_path):
+    if f.endswith('cm.csv') == True:
         print f
-        raw = pd.DataFrame.from_csv(LBJ_PT_path+f,header=11,parse_dates=[[0,1]])
-        raw = raw.ix[:,1:3]
+        raw = Solinst_data_parser(PT_path+f)
+        raw = raw[['LEVEL','TEMPERATURE']]
         raw.columns  = ['Abs Pres, kPa','Temp, C']
         LBJ_PT_raw_data = LBJ_PT_raw_data.append(raw)
 ## CLEAN UP DATA          
 LBJ_PT_raw_data = LBJ_PT_raw_data.sort_index()
 LBJ_PT_raw_data['index'] = LBJ_PT_raw_data.index
 LBJ_PT_raw_data = LBJ_PT_raw_data.drop_duplicates(cols = 'index')
+LBJ_PT_raw_data ['Abs Pres, kPa'] = LBJ_PT_raw_data ['Abs Pres, kPa']*0.0980665
 ## BAROMETRIC COMPENSATION
 LBJ_PT_raw_data['Baropress'] = LBJ_Barologger_raw_data['Abs Pres, kPa']
 LBJ_PT_raw_data['Pressure_compensated'] = LBJ_PT_raw_data['Abs Pres, kPa']-LBJ_PT_raw_data['Baropress']
@@ -109,13 +147,13 @@ LBJ_PT_raw_data.to_csv(maindir+'3-LBJ/LBJ-PT-Stage-'+now_date+'.csv')
 
 
 ### FOREST-PT
-FOREST_PT_path = maindir+'1-FOREST/FOREST-PT/'
+PT_path = maindir+'1-FOREST/FOREST-PT/'
 FOREST_PT_raw_data = pd.DataFrame()
-for f in os.listdir(FOREST_PT_path):
+for f in os.listdir(PT_path):
     if f.endswith('.csv') == True:
         print f
-        raw = pd.DataFrame.from_csv(FOREST_PT_path+f,header=11,parse_dates=[[0,1]])
-        raw = raw.ix[:,1:3]
+        raw = Solinst_data_parser(PT_path+f)
+        raw = raw[['LEVEL','TEMPERATURE']]
         raw.columns  = ['Abs Pres, kPa','Temp, C']
         FOREST_PT_raw_data = FOREST_PT_raw_data.append(raw)
 ## CLEAN UP DATA       
@@ -166,6 +204,10 @@ QUARRY_RG_1Min['mm_15Min'] = QUARRY_RG_1Min['Events_15Min']*0.254 ##hundredths t
 ## Reindex into a 15Min interval
 QUARRY_RG = QUARRY_RG_1Min[['mm_15Min']].reindex(pd.date_range(start2016,stop2016,freq='15Min'))
 
+## save for later
+QUARRY_RG.to_csv(maindir+'2-QUARRY/QUARRY-RAIN GAUGE/Precip_15Min-'+now_date+'.csv')
+
+
 
 ### PLOTTING RAW DATA
 
@@ -175,12 +217,17 @@ fig, (precip, pressure, stage, turb) = plt.subplots(4,1,figsize=(14,8),sharex=Tr
 precip.plot_date(QUARRY_RG.index, QUARRY_RG['mm_15Min'], color='b',alpha=0.5,ls='steps-pre', marker='None',label='Precip_mm_15Min')
 precip.set_ylabel('Precip mm'), precip.set_ylim(0,10)
 plt.show() 
+
 ### BAROMETRIC and TRANSDUCER PRESSURE
+
+## BAROMETERS
 ## LBJ-BL-Barologger at LBJ
 pressure.plot_date(LBJ_Barologger_raw_data.index, LBJ_Barologger_raw_data['Abs Pres, kPa'],alpha=0.5, ls='-', marker='None', label='LBJ Barologger pressure', color='r')
 ## FOREST-BL-Barologger at FOREST
 pressure.plot_date(FOREST_Barologger_raw_data.index, FOREST_Barologger_raw_data['Abs Pres, kPa'],alpha=0.5, ls='-', marker='None', label='FOREST Barologger pressure', color='g')
 
+
+## PTs
 ## LBJ-PT
 pressure.plot_date(LBJ_PT_raw_data['Abs Pres, kPa'].index, LBJ_PT_raw_data['Abs Pres, kPa'], ls='-', marker='None', label='LBJ PT pressure',color='r')
 ## FOREST-PT
