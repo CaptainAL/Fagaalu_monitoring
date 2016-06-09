@@ -1,0 +1,5 @@
+"TOA5","LBJ","CR200X","No_SN","CR200X.Std.02","15min_100times_only.CR2","24549","Data"
+"TIMESTAMP","RECORD","Turb_BS_Median","Turb_BS_Mean","Turb_BS_STD","Turb_BS_Min","Turb_BS_Max","Turb_SS_Median","Turb_SS_Mean","Turb_SS_STD","Turb_SS_Min","Turb_SS_Max"
+"TS","RN","","","","","","","","","",""
+"","","Smp","Smp","Smp","Smp","Smp","Smp","Smp","Smp","Smp","Smp"
+"2016-02-08 13:30:00",0,4.923196,5.017026,0.8972033,3.037154,8.984766,7.639086,7.810771,0.4190122,7.431735,9.929595
