@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 #import math
 import datetime as dt
+import matplotlib
 import matplotlib.pyplot as plt
 ## Set Pandas display options
 pd.set_option('display.large_repr', 'truncate')
@@ -218,7 +219,7 @@ QUARRY_RG.to_csv(maindir+'2-QUARRY/QUARRY-Precip_15Min-'+now_date+'.csv')
 ### PLOTTING RAW DATA
 
 fig, (precip, pressure, stage, turb) = plt.subplots(4,1,figsize=(14,8),sharex=True) 
-
+fig.suptitle('Raw data input')
 ## PRECIP
 precip.plot_date(QUARRY_RG.index, QUARRY_RG['mm_15Min'], color='b',alpha=0.5,ls='steps-pre', marker='None',label='Precip_mm_15Min')
 precip.set_ylabel('Precip mm'), precip.set_ylim(0,10)
@@ -256,7 +257,7 @@ stage.set_xlim(start2016,stop2016)
 
 #import matplotlib.dates as mdates
 stage.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%m/%d %H:%M'))
-
+plt.show()
 
 #%%
 
@@ -298,10 +299,10 @@ FOREST_PT_raw_data = drop_data(FOREST_PT_raw_data,'05/04/2016 10:10','05/04/2016
 
 #%%
 
-### PLOTTING CORRECTED/FINAL STAGE DATA
+### PLOTTING CORRECTED STAGE DATA
 
 fig, (precip, pressure, stage, turb) = plt.subplots(4,1,figsize=(14,8),sharex=True) 
-
+fig.suptitle('Data dropout corrected')
 ## PRECIP
 precip.plot_date(QUARRY_RG.index, QUARRY_RG['mm_15Min'], color='b',alpha=0.5,ls='steps-pre', marker='None',label='Precip_mm_15Min')
 precip.set_ylabel('Precip mm'), precip.set_ylim(0,10)
@@ -339,7 +340,7 @@ stage.set_xlim(start2016,stop2016)
 
 #import matplotlib.dates as mdates
 stage.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%m/%d %H:%M'))
-
+plt.show()
 
 #%%
 
@@ -366,24 +367,70 @@ def correct_Stage_data(corrections,raw_stage):
     ## Add in the part of the timeseries that did not need correction
     raw_stage['stage_cm']=raw_stage['corrected_stage_cm'].where(raw_stage['corrected_stage_cm']>0,raw_stage['raw_stage_cm'])#.round(0)
     return raw_stage
-    
+
+
+## IF YOU NEED ALREADY MADE DATA  
 #LBJ_PT_raw_data= pd.DataFrame.from_csv(maindir+'3-LBJ/LBJ-PT-Stage-raw.csv')
 
 ## LBJ Final Stage    
 #LBJ_correction_list = [['2/6/2016 16:15','2/7/2016 16:00','10'],['2/17/2016 16:15','2/27/2016 16:00','10']]
 LBJ_correction_list = [[start2016,stop2016,'0']]
 LBJ_correction_df = pd.DataFrame(LBJ_correction_list,columns=['T1_datetime','T2_datetime','zshift_cm'])
-LBJ_PT_raw_data = correct_Stage_data(LBJ_correction_df,LBJ_PT_raw_data)
+LBJ_PT_final_data = correct_Stage_data(LBJ_correction_df,LBJ_PT_raw_data)
 ## Output
-LBJ_PT_raw_data.to_csv(maindir+'3-LBJ/LBJ-PT-Stage-final.csv')
+LBJ_PT_final_data.to_csv(maindir+'3-LBJ/LBJ-PT-Stage-final.csv')
 
 ## FOREST Final Stage
 FOREST_correction_list = [[start2016,stop2016,'0']] ## For no corrections
 FOREST_correction_df = pd.DataFrame(FOREST_correction_list,columns=['T1_datetime','T2_datetime','zshift_cm'])
-FOREST_PT_raw_data  = correct_Stage_data(FOREST_correction_df,FOREST_PT_raw_data)
+FOREST_PT_final_data  = correct_Stage_data(FOREST_correction_df,FOREST_PT_raw_data)
 ## Output
-FOREST_PT_raw_data.to_csv(maindir+'1-FOREST/FOREST-PT-Stage-final.csv')
+FOREST_PT_final_data.to_csv(maindir+'1-FOREST/FOREST-PT-Stage-final.csv')
 
+#%%
+
+### PLOTTING CORRECTED/FINAL STAGE DATA
+
+fig, (precip, pressure, stage, turb) = plt.subplots(4,1,figsize=(14,8),sharex=True) 
+fig.suptitle('Base level corrected')
+## PRECIP
+precip.plot_date(QUARRY_RG.index, QUARRY_RG['mm_15Min'], color='b',alpha=0.5,ls='steps-pre', marker='None',label='Precip_mm_15Min')
+precip.set_ylabel('Precip mm'), precip.set_ylim(0,10)
+plt.show() 
+
+### BAROMETRIC and TRANSDUCER PRESSURE
+
+## BAROMETERS
+## LBJ-BL-Barologger at LBJ
+pressure.plot_date(LBJ_Barologger_raw_data.index, LBJ_Barologger_raw_data['Abs Pres, kPa'],alpha=0.5, ls='-', marker='None', label='LBJ Barologger pressure', color='r')
+## FOREST-BL-Barologger at FOREST
+pressure.plot_date(FOREST_Barologger_raw_data.index, FOREST_Barologger_raw_data['Abs Pres, kPa'],alpha=0.5, ls='-', marker='None', label='FOREST Barologger pressure', color='g')
+
+
+## PTs
+## LBJ-PT
+pressure.plot_date(LBJ_PT_raw_data['Abs Pres, kPa'].index, LBJ_PT_raw_data['Abs Pres, kPa'], ls='-', marker='None', label='LBJ PT pressure',color='r')
+## FOREST-PT
+pressure.plot_date(FOREST_PT_raw_data['Abs Pres, kPa'].index, FOREST_PT_raw_data['Abs Pres, kPa'], ls='-', marker='None', label='FOREST PT pressure',color='g')
+## fmt
+pressure.legend(loc='upper left', ncol=2)
+pressure.set_ylabel('kPa')
+pressure.set_xlim(start2016,stop2016)
+
+
+### STAGE
+## LBJ-PT
+stage.plot_date(LBJ_PT_raw_data['raw_stage_cm'].index, LBJ_PT_raw_data['raw_stage_cm'], ls='-', marker='None', label='LBJ-PT',color='r')
+## FOREST-PT
+stage.plot_date(FOREST_PT_raw_data['raw_stage_cm'].index, FOREST_PT_raw_data['raw_stage_cm'], ls='-', marker='None', label='FOREST-PT',color='g')
+## fmt
+stage.legend(loc='upper left')
+stage.set_ylabel('cm')
+stage.set_xlim(start2016,stop2016)
+
+#import matplotlib.dates as mdates
+stage.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%m/%d %H:%M'))
+plt.show()
 
 #%%
 
@@ -400,18 +447,24 @@ if 'LBJ_Man' not in locals():
     except:
         ## Import final/corrected stage data from csv's (created in Module 1)
         LBJ_stage = pd.DataFrame.from_csv(maindir+'3-LBJ/LBJ-PT-Stage-final.csv') ## FINAL/CORRECTED STAGE DATA
+        del LBJ_stage['zshift_cm']
         ## Calculate discharge from Manning's equation, for each cm of stage
         from Mannings_from_stage import Mannings_Q_from_stage_data
         ## Mannings parameters for the LBJ
         LBJ_S, LBJ_n, LBJ_k = 0.016, .067, 1
         ## Create a dataframe of only the stage values that are recorded
-        LBJ_stage_reduced = LBJ_stage['corrected_stage_cm'].dropna().round(0).drop_duplicates().order()
+        LBJ_stage_reduced = LBJ_stage['stage_cm'].dropna().round(0).drop_duplicates().order()
         ## Calculate discharge with Mannings on the reduced range of values
         LBJ_Man_reduced = Mannings_Q_from_stage_data(maindir+'3-LBJ/LBJ_cross_section.xlsx','LBJ_m',Slope=LBJ_S,Manning_n=LBJ_n,k=LBJ_k, stage_data=LBJ_stage_reduced)
+        ## Visualize Stage-Q Rating
+        plt.scatter(LBJ_Man_reduced['stage(m)'], LBJ_Man_reduced['Q(m3/s)'])
         ## Save the output to csv
         LBJ_Man_reduced.to_csv(maindir+'3-LBJ/LBJ_Man_reduced.csv')
 
-del LBJ_stage['zshift_cm']
+try:
+    del LBJ_stage['zshift_cm']
+except:
+    pass
 
 ## Add to stage
 #LBJ_stage['corrected_stage_cm'] = LBJ_stage['corrected_stage_cm'] + 5. ## add 5cm so no zero/negative values???? Not sure what this is from, maybe offset with the AV measurements
@@ -420,28 +473,54 @@ LBJ_stage['stage_m'] = LBJ_stage['corrected_stage_cm'].round(0)/100.
 ## Match discharge to stage records for whole time series
 ## Add column for Discharge
 LBJ_stage['Q(m3/s)'] = np.nan
+
 ## Iterate over stage records and add discharge value from the reduced stage record for which Manning's Q was calculated
 ## This saves you from re-calculating Mannings for each stage value, just do it once for each cm of stage!
 for row in LBJ_stage.dropna(how='all').iterrows():
-    print row[0]
+    #print row[0]
     stage = row[1]['stage_m']
-    Q = LBJ_Man_reduced[LBJ_Man_reduced['stage(m)']==stage]['Q(m3/s)'].iloc[0]
-
-    print row[0], stage, Q
+    try:
+        Q = LBJ_Man_reduced[LBJ_Man_reduced['stage(m)']==stage]['Q(m3/s)'].iloc[0]
+        LBJ_stage.loc[row[0],'Q(m3/s)'] = Q
+    except:
+        print "Can't get Q data from LBJ_Man_reduced"+ str(row[0])+str(stage)
+    #print row[0], stage, Q
     # .iloc[row_index,col_index] = value
     # .loc[row_index,col_index] = value
-    LBJ_stage.loc[row[0],'Q(m3/s)'] = Q
-
+    
+## Visualize Q timeseries
+fig, Q = plt.subplots(1,1)
+Q.plot_date(LBJ_stage.index, LBJ_stage['Q(m3/s)'],marker='None',ls='-',c='r')
+## Pass stage data on to discharge df
 LBJ_Q = LBJ_stage
 ## Save the Q timeseries output to csv
 LBJ_Q.to_csv(maindir+'3-LBJ/LBJ_Q.csv')
 
+#%%
 
 ## FOREST
-#FOREST_stage = pd.DataFrame.from_csv(maindir+'1-FOREST/FOREST-PT-Stage-final.csv')
+FOREST_stage = pd.DataFrame.from_csv(maindir+'1-FOREST/FOREST-PT-Stage-final.csv')
 
+### HEC-RAS Model of the DAM structure: Documents/HEC/FagaaluDam.prj
+def HEC_piecewise(PTdata):
+    if type(PTdata)!=pd.Series:
+        PTdata = pd.Series(data=PTdata)
+    HEC_a1, HEC_b1 = 9.9132, -5.7184 ## from excel DAM_HEC.xlsx
+    HEC_a2, HEC_b2 = 25.823, -171.15 
+    HEC_a3, HEC_b3 = 98.546, -3469.4
+    
+    Func1=PTdata[PTdata<=11]*HEC_a1 + HEC_b1
+    Func2=PTdata[(PTdata>11)&(PTdata<=45)]*HEC_a2 + HEC_b2
+    Func3=PTdata[PTdata>45]*HEC_a3 + HEC_b3
+    AllValues = Func1.append([Func2,Func3])
+    return AllValues
+    
+FOREST_HEC = pd.DataFrame(data=range(0,150),columns=['stage(cm)'])
+FOREST_HEC['Q_HEC(L/sec)'] = HEC_piecewise(FOREST_HEC['stage(cm)'])
 
+FOREST_HEC['Q_HEC(L/sec)']= HEC_piecewise(FOREST_HEC['stage(cm)']).values
 
+FOREST_HEC_rating = pd.ols(y=FOREST_HEC['Q_HEC(L/sec)'],x=FOREST_HEC['stage(cm)'],intercept=True) 
 
 
 #%%
